@@ -1,6 +1,13 @@
 # spherical-video-player
 Project for Web programming for sound and music (UniMi).
 
+---
+
+# Instructions
+- **Video**: for size reasons, the used video isn't part of the repository. Download it from the source (i tested with 1440p): [London Park Ducks](https://vimeo.com/215985064) and put it as `/resources/videos/london_park.mp4`.
+
+---
+
 > ## Traccia 3
 > 
 > Player Web per Video Sferici e Audio Ambisonics (FOA)
@@ -38,8 +45,3 @@ Project for Web programming for sound and music (UniMi).
 > ### Note
 >
 > È possibile usare registrazioni fornite dal docente o realizzate autonomamente, purché coerenti con i formati richiesti. L’output sarà valutato anche in base alla qualità della sincronizzazione tra audio e video e all’usabilità dell’interfaccia.
-
----
-
-# Instructions
-- **Video**: for size reasons, the used video isn't part of the repository. Download it from the source (i tested with 1440p): [London Park Ducks](https://vimeo.com/215985064) and put it as `/resources/videos/london_duck.mp4`.
