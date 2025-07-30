@@ -1,0 +1,120 @@
+/* Player container */
+.video-player {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	background: rgba(0, 0, 0, 0.6);
+	transition: transform 0.3s ease, opacity 0.3s ease;
+	transform: translateY(100%);
+	opacity: 0;
+	z-index: 1000;
+	pointer-events: none;
+}
+
+.video-player.visible {
+	transform: translateY(0%);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+/* Video element */
+.video-player video {
+	width: 100%;
+	display: block;
+}
+
+.video-controls {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 16px;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.control-button {
+	background: #2c2c2c;
+	color: #fff;
+	border: none;
+	padding: 6px 10px;
+	font-size: 16px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.control-button:hover {
+	background: #3a3a3a;
+}
+
+.control-button:active {
+	background: #505050;
+}
+
+.control-button .icon {
+	font-size: 18px;
+}
+
+.progress-bar {
+	flex: 1;
+	height: 6px;
+	background: #333;
+	border-radius: 3px;
+	position: relative;
+	cursor: pointer;
+	margin: 0 10px;
+}
+
+.progress-filled {
+	height: 100%;
+	background: #00adee;
+	border-radius: 3px;
+	width: 0%;
+	transition: width 0.1s linear;
+}
+
+.volume-control {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.volume-slider {
+	width: 80px;
+	height: 4px;
+	background: #555;
+	appearance: none;
+	border-radius: 2px;
+	cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+	appearance: none;
+	width: 10px;
+	height: 10px;
+	background: #00adee;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.fullscreen-button {
+	background: transparent;
+	border: 1px solid #444;
+	border-radius: 6px;
+	padding: 6px;
+	cursor: pointer;
+	color: #ccc;
+	transition: all 0.2s ease;
+}
+
+.fullscreen-button:hover {
+	background: #222;
+	color: #fff;
+}
+
+/* Used to hide the A-Frame included fullscreen button */
+.a-enter-vr-button,
+.a-fullscreen-button {
+  display: none !important;
+}
