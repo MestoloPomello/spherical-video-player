@@ -1,9 +1,9 @@
 import 'aframe';
 import Omnitone from '../node_modules/omnitone/build/omnitone.min.esm.js';
-import { initializePlayerCommands } from './player-commands.js';
+import initPlayerCommands from './initPlayerCommands.js';
 
 window.addEventListener('load', async () => {
-	initializePlayerCommands();
+	initPlayerCommands();
 
 	const videoElement = document.getElementById('video360');
 	const cameraElement = document.getElementById('camera');
@@ -19,10 +19,6 @@ window.addEventListener('load', async () => {
 	// srcNode.connect(foaRenderer.input);
 	// foaRenderer.output.connect(audioCtx.destination);
 
-	document.body.addEventListener('click', () => {
-		videoClickHandler(videoElement);
-	});
-
 	// Update the listener orientation after each frame
 	AFRAME.registerComponent('listener-orientation-sync', {
 		tick: function () {
@@ -36,13 +32,3 @@ window.addEventListener('load', async () => {
 
 	cameraElement.setAttribute('listener-orientation-sync', '');
 });
-
-function videoClickHandler(videoElement) {
-	// TODO - handle audio, separately from the video
-	if (videoElement.paused) {
-		// audioCtx.resume();
-		videoElement.play();
-	} else {
-		videoElement.pause();
-	}
-}
