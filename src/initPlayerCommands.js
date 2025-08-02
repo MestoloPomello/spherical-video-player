@@ -10,15 +10,6 @@ export default function() {
 	let hideTimeout = null;
 	let savedVolume = 0.5;
 
-	// Show the bar when the mouse is near the bottom border
-	window.addEventListener("mousemove", (event) => {
-		mouseY = event.clientY;
-		const windowHeight = window.innerHeight;
-		if (mouseY > windowHeight - 80) {
-			showBar();
-		}
-	});
-
 	const videoElement = document.getElementById("video360");
 	const playBtn = document.getElementById("playBtn");
 	const stopBtn = document.getElementById("stopBtn");
@@ -43,6 +34,7 @@ export default function() {
 		// For all of the possible keyboard interactions
 		switch (event.key) {
 			case " ":
+				event.preventDefault(); // Prevent page scroll
 				handlePlayPause();
 				break;
 			case "m":
@@ -52,6 +44,15 @@ export default function() {
 		}
 	});
 	
+	window.addEventListener("mousemove", (event) => {
+	// Show the bar when the mouse is near the bottom border
+		mouseY = event.clientY;
+		const windowHeight = window.innerHeight;
+		if (mouseY > windowHeight - 80) {
+			showBar();
+		}
+	});
+
 	playBtn.addEventListener("click", () => {
 		handlePlayPause();
 	});
@@ -60,6 +61,12 @@ export default function() {
 		// Stop = pause + rewind
 		videoElement.pause();
 		videoElement.currentTime = 0;
+		
+		// Stop all spatial sources
+		if (window.spatialManager) {
+			window.spatialManager.stopAll();
+		}
+		
 		playBtn.innerHTML = ICONS.play;
 	});
 
@@ -84,6 +91,11 @@ export default function() {
 		const rect = progressBar.getBoundingClientRect();
 		const pos = (event.clientX - rect.left) / rect.width;
 		videoElement.currentTime = pos * videoElement.duration;
+		
+		// Sync all spatial sources
+		if (window.spatialManager) {
+			window.spatialManager.seekAll(pos * videoElement.duration);
+		}
 	});
 
 	// Fullscreen
@@ -99,10 +111,15 @@ export default function() {
 		// This event sets the icons accordingly to the current fullscreen state
 		if (!document.fullscreenElement) {
 			fullscreenBtn.innerHTML = ICONS.expand;
-			playerContainer.focus(); // TODO - fix
+			playerContainer.focus();
 		} else {
 			fullscreenBtn.innerHTML = ICONS.compress;
 		}
+	});
+
+	// Focus the container on load for keyboard controls
+	window.addEventListener("load", () => {
+		playerContainer.focus();
 	});
 
 	
@@ -117,22 +134,42 @@ export default function() {
 	}
 	
 	function handlePlayPause() {
-		// TODO - handle audio, separately from the video
 		if (videoElement.paused) {
-			// audioCtx.resume();
+			// Resume AudioContext if needed
+			if (window.audioCtx && window.audioCtx.state === "suspended") {
+				window.audioCtx.resume();
+			}
+			
 			playBtn.innerHTML = ICONS.pause;
 			videoElement.play();
+			
+			// Play all spatial sources
+			if (window.spatialManager) {
+				window.spatialManager.playAll();
+			}
 		} else {
 			playBtn.innerHTML = ICONS.play;
 			videoElement.pause();
+			
+			// Pause all spatial sources
+			if (window.spatialManager) {
+				window.spatialManager.pauseAll();
+			}
 		}
 	}
 
 	function handleVolume(value) {
-		videoElement.volume = value;
-		if (videoElement.volume == 0) {
+		// videoElement.volume = value;
+		
+		// Set volume for all spatial sources
+		if (window.spatialManager) {
+			window.spatialManager.setMasterVolume(value);
+		}
+		
+		// Update volume icon
+		if (value == 0) {
 			volumeIcon.innerHTML = ICONS.volume_off;
-		} else if (videoElement.volume <= 0.5) {
+		} else if (value <= 0.5) {
 			volumeIcon.innerHTML = ICONS.volume_low;
 		} else {
 			volumeIcon.innerHTML = ICONS.volume_high;

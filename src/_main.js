@@ -1,34 +1,74 @@
-import 'aframe';
-import Omnitone from '../node_modules/omnitone/build/omnitone.min.esm.js';
-import initPlayerCommands from './initPlayerCommands.js';
+import "aframe";
+import initPlayerCommands from "./initPlayerCommands.js";
+import AmbisonicsSourceManager from "./AmbisonicsSourceManager.js";
 
-window.addEventListener('load', async () => {
+// TODO - creation of a drive folder with the video and audio sources to be downloaded
+// in a single package
+
+window.addEventListener("load", async () => {
 	initPlayerCommands();
 
-	const videoElement = document.getElementById('video360');
-	const cameraElement = document.getElementById('camera');
+	let syncTimer;
 
-	// const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	const videoElement = document.getElementById("video360");
+	const cameraElement = document.getElementById("camera");
 
-	// Omnitone initialization
-	// const foaRenderer = Omnitone.createFOARenderer(audioCtx);
-	// await foaRenderer.initialize();
+	// Initialize AudioContext
+	const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+	window.audioCtx = audioCtx;
 
-	// Set the video as audios source - TODO: probably change this
-	// const srcNode = audioCtx.createMediaElementSource(videoElement);
-	// srcNode.connect(foaRenderer.input);
-	// foaRenderer.output.connect(audioCtx.destination);
+	try {
+		const ambisonicsManager = new AmbisonicsSourceManager(audioCtx, videoElement);
+		window.spatialManager = ambisonicsManager; // Nome compatibile con i controlli
 
-	// Update the listener orientation after each frame
-	AFRAME.registerComponent('listener-orientation-sync', {
-		tick: function () {
-			const rotation = cameraElement.getAttribute('rotation');
-			const yaw = -rotation.y * Math.PI / 180;
-			const pitch = -rotation.x * Math.PI / 180;
-			const roll = -rotation.z * Math.PI / 180;
-			// foaRenderer.setListenerOrientation(yaw, pitch, roll);
+		// Sound sources
+		await ambisonicsManager.addAmbisonicsSource(
+			"./resources/audio/ducks.wav",
+			0.5,  // volume 70%
+			{ yaw: Math.PI/2, pitch: 0, roll: 0 }  // 90° a destra
+		);
+
+		// Update all listener orientations based on camera rotation
+		AFRAME.registerComponent("ambisonics-listener-sync", {
+			tick: function () {
+				const rotation = cameraElement.getAttribute("rotation");
+
+				// Convert A-Frame rotation to radiants
+				const yaw = -rotation.y * Math.PI / 180;   // Horizontal rotation
+				const pitch = -rotation.x * Math.PI / 180; // Vertical rotation  
+				const roll = -rotation.z * Math.PI / 180;  // Roll rotation
+
+				ambisonicsManager.updateGlobalOrientation(yaw, pitch, roll);
+			}
+		});
+
+		cameraElement.setAttribute("ambisonics-listener-sync", "");
+
+		videoElement.addEventListener("play", startSyncTimer);
+		videoElement.addEventListener("pause", stopSyncTimer);
+		videoElement.addEventListener("ended", stopSyncTimer);
+
+		// Cleanup when the page is closed
+		window.addEventListener("beforeunload", stopSyncTimer);
+
+		
+		// Local functions
+
+		function startSyncTimer() {
+			syncTimer = setInterval(() => {
+				if (window.spatialManager && !videoElement.paused) {
+					window.spatialManager.checkSynchronization();
+				}
+			}, 500);
 		}
-	});
 
-	cameraElement.setAttribute('listener-orientation-sync', '');
+		function stopSyncTimer() {
+			if (syncTimer) {
+				clearInterval(syncTimer);
+				syncTimer = null;
+			}
+		}
+	} catch (error) {
+		console.error("[Main] Error initializing Ambisonics Source Manager:", error);
+	}
 });

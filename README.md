@@ -4,7 +4,7 @@ Project for Web programming for sound and music (UniMi).
 ---
 
 # Instructions
-- **Video**: for size reasons, the used video isn't part of the repository. Download it from the source (i tested with 1440p): [London Park Ducks](https://vimeo.com/215985064) and put it as `/resources/videos/london_park.mp4`.
+- **Video**: for size reasons, the used video isn't part of the repository. Download it from the source (i tested with 1440p): [London Park Ducks](https://vimeo.com/215985064) and put it as `/resources/video/london_park.mp4`.
 
 ---
 
