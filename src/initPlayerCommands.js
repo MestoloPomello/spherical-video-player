@@ -18,14 +18,18 @@ export default function() {
 	const progressFilled = document.getElementById("progressFilled");
 	const fullscreenBtn = document.getElementById("fullscreenBtn");
 	const volumeIcon = document.getElementById("volumeIcon");
-	
+
+	// MUTE VIDEO AUDIO - Keep only Ambisonics audio
+	videoElement.volume = 0;
+	videoElement.muted = true;
+
 	// Set icons
 	playBtn.innerHTML = ICONS.play;
 	stopBtn.innerHTML = ICONS.stop;
 	volumeIcon.innerHTML = ICONS.volume_low;
 	fullscreenBtn.innerHTML = ICONS.expand;
 
-	
+
 	// Event listeners
 
 	const playerContainer = document.getElementById("player-container");
@@ -40,12 +44,12 @@ export default function() {
 			case "m":
 				handleMute();
 				break;
-			// TODO - check for other possible keybinds
+				// TODO - check for other possible keybinds
 		}
 	});
-	
+
 	window.addEventListener("mousemove", (event) => {
-	// Show the bar when the mouse is near the bottom border
+		// Show the bar when the mouse is near the bottom border
 		mouseY = event.clientY;
 		const windowHeight = window.innerHeight;
 		if (mouseY > windowHeight - 80) {
@@ -61,17 +65,21 @@ export default function() {
 		// Stop = pause + rewind
 		videoElement.pause();
 		videoElement.currentTime = 0;
-		
+
 		// Stop all spatial sources
 		if (window.spatialManager) {
 			window.spatialManager.stopAll();
 		}
-		
+
 		playBtn.innerHTML = ICONS.play;
 	});
 
-	videoElement.volume = savedVolume; // Used as a default
+	// Initialize Ambisonics volume control (not video volume)
 	volumeSlider.value = savedVolume;
+	if (window.spatialManager) {
+		window.spatialManager.setMasterVolume(savedVolume);
+	}
+
 	volumeSlider.addEventListener("input", (event) => {
 		handleVolume(event.target.value);
 	});
@@ -91,7 +99,7 @@ export default function() {
 		const rect = progressBar.getBoundingClientRect();
 		const pos = (event.clientX - rect.left) / rect.width;
 		videoElement.currentTime = pos * videoElement.duration;
-		
+
 		// Sync all spatial sources
 		if (window.spatialManager) {
 			window.spatialManager.seekAll(pos * videoElement.duration);
@@ -122,7 +130,7 @@ export default function() {
 		playerContainer.focus();
 	});
 
-	
+
 	// Local functions and handlers
 
 	function showBar() {
@@ -132,17 +140,17 @@ export default function() {
 			videoPlayerBar.classList.remove("visible");
 		}, 3000);
 	}
-	
+
 	function handlePlayPause() {
 		if (videoElement.paused) {
 			// Resume AudioContext if needed
 			if (window.audioCtx && window.audioCtx.state === "suspended") {
 				window.audioCtx.resume();
 			}
-			
+
 			playBtn.innerHTML = ICONS.pause;
 			videoElement.play();
-			
+
 			// Play all spatial sources
 			if (window.spatialManager) {
 				window.spatialManager.playAll();
@@ -150,7 +158,7 @@ export default function() {
 		} else {
 			playBtn.innerHTML = ICONS.play;
 			videoElement.pause();
-			
+
 			// Pause all spatial sources
 			if (window.spatialManager) {
 				window.spatialManager.pauseAll();
@@ -159,13 +167,11 @@ export default function() {
 	}
 
 	function handleVolume(value) {
-		// videoElement.volume = value;
-		
-		// Set volume for all spatial sources
+		// Set volume only for spatial sources
 		if (window.spatialManager) {
 			window.spatialManager.setMasterVolume(value);
 		}
-		
+
 		// Update volume icon
 		if (value == 0) {
 			volumeIcon.innerHTML = ICONS.volume_off;
@@ -182,8 +188,13 @@ export default function() {
 		// If the user takes the volume to 0 and presses the button, it
 		// gets defaulted to 0.5.
 		let newValue;
-		if (videoElement.volume != 0) {
-			savedVolume = videoElement.volume;
+
+		// Get current Ambisonics volume instead of video volume
+		const currentVolume = window.spatialManager ? 
+			window.spatialManager.masterGain.gain.value : 0;
+
+		if (currentVolume != 0) {
+			savedVolume = currentVolume;
 			newValue = 0;
 		} else if (savedVolume != 0) {
 			newValue = savedVolume;

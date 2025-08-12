@@ -21,10 +21,13 @@ window.addEventListener("load", async () => {
 		const ambisonicsManager = new AmbisonicsSourceManager(audioCtx, videoElement);
 		window.spatialManager = ambisonicsManager; // Nome compatibile con i controlli
 
+		// Set initial volume for Ambisonics
+		ambisonicsManager.setMasterVolume(0.5);
+
 		// Sound sources
 		await ambisonicsManager.addAmbisonicsSource(
 			"./resources/audio/ducks.wav",
-			0.5,  // volume 70%
+			0.5,  // volume 50%
 			{ yaw: Math.PI/2, pitch: 0, roll: 0 }  // 90° a destra
 		);
 
