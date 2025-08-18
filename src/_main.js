@@ -1,6 +1,6 @@
 import "aframe";
 import initPlayerCommands from "./initPlayerCommands.js";
-import AmbisonicsSourceManager from "./AmbisonicsSourceManager.js";
+import SpatialAudioManager from "./SpatialAudioManager.js";
 
 // TODO - creation of a drive folder with the video and audio sources to be downloaded
 // in a single package
@@ -18,34 +18,41 @@ window.addEventListener("load", async () => {
 	window.audioCtx = audioCtx;
 
 	try {
-		const ambisonicsManager = new AmbisonicsSourceManager(audioCtx, videoElement);
-		window.spatialManager = ambisonicsManager; // Nome compatibile con i controlli
+		const spatialManager = new SpatialAudioManager(audioCtx, videoElement);
+		window.spatialManager = spatialManager; // Nome compatibile con i controlli
 
-		// Set initial volume for Ambisonics
-		ambisonicsManager.setMasterVolume(0.5);
+		// Set initial volume for spatial audio
+		spatialManager.setMasterVolume(0.5);
 
-		// Sound sources
-		await ambisonicsManager.addAmbisonicsSource(
+		// Add spatial sound sources with precise positioning
+		await spatialManager.addSpatialSource(
 			"./resources/audio/ducks.wav",
-			0.5,  // volume 50%
-			{ yaw: Math.PI/2, pitch: 0, roll: 0 }  // 90° a destra
+			{ x: -8, y: 0, z: 3 }, // 8 units left, 3 units back 
+			0.9
 		);
 
-		// Update all listener orientations based on camera rotation
-		AFRAME.registerComponent("ambisonics-listener-sync", {
+		// Example: add another source in a different position
+		// await spatialManager.addSpatialSource(
+		//     "./resources/audio/birds.wav",
+		//     { x: -5, y: 2, z: 5 }, // left, slightly up, behind
+		//     0.6
+		// );
+
+		// Update listener orientation based on camera rotation
+		AFRAME.registerComponent("spatial-listener-sync", {
 			tick: function () {
 				const rotation = cameraElement.getAttribute("rotation");
 
-				// Convert A-Frame rotation to radiants
+				// Convert A-Frame rotation to radians
 				const yaw = -rotation.y * Math.PI / 180;   // Horizontal rotation
 				const pitch = -rotation.x * Math.PI / 180; // Vertical rotation  
 				const roll = -rotation.z * Math.PI / 180;  // Roll rotation
 
-				ambisonicsManager.updateGlobalOrientation(yaw, pitch, roll);
+				spatialManager.updateListenerOrientation(yaw, pitch, roll);
 			}
 		});
 
-		cameraElement.setAttribute("ambisonics-listener-sync", "");
+		cameraElement.setAttribute("spatial-listener-sync", "");
 
 		videoElement.addEventListener("play", startSyncTimer);
 		videoElement.addEventListener("pause", stopSyncTimer);
@@ -54,7 +61,6 @@ window.addEventListener("load", async () => {
 		// Cleanup when the page is closed
 		window.addEventListener("beforeunload", stopSyncTimer);
 
-		
 		// Local functions
 
 		function startSyncTimer() {
@@ -72,6 +78,6 @@ window.addEventListener("load", async () => {
 			}
 		}
 	} catch (error) {
-		console.error("[Main] Error initializing Ambisonics Source Manager:", error);
+		console.error("[Main] Error initializing Spatial Audio Manager:", error);
 	}
 });
