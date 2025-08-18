@@ -4,7 +4,12 @@ Project for Web programming for sound and music (UniMi).
 ---
 
 # Instructions
-- **Resources**: for size reasons, the used video and audios aren't part of the repository. Download them from this [Drive folder](https://drive.google.com/drive/folders/1tNWFZLX-UxAmRP5MhseNhcDPRBL5kpvW?usp=sharing) and put the content in `/resources/`.
+
+### Resources
+For size reasons, the used video and audios aren't part of the repository. Download them from this [Drive folder](https://drive.google.com/drive/folders/1tNWFZLX-UxAmRP5MhseNhcDPRBL5kpvW?usp=sharing) and put the content in `/resources/`.
+
+### Test
+Move to the root directory of the project and run `npx vite`. The test website will be available on `http://localhost:3000/`.
 
 ---
 
