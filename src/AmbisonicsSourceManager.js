@@ -10,6 +10,8 @@ export default class AmbisonicsSourceManager {
 
 		// Global camera orientation listener
 		this.currentOrientation = { yaw: 0, pitch: 0, roll: 0 };
+		
+		console.log("[ASM] AmbisonicsSourceManager initialized");
 	}
 
 	async addAmbisonicsSource(
@@ -22,10 +24,15 @@ export default class AmbisonicsSourceManager {
 			audioElement.crossOrigin = "anonymous";
 			audioElement.loop = true;
 			audioElement.src = audioFilePath;
+			audioElement.preload = "auto";
 
-			// FOA decoder for this single source
+			console.log("[ASM] Audio element created for:", audioFilePath);
+
+			// FOA decoder for this single source - try without custom config first
 			const foaRenderer = Omnitone.createFOARenderer(this.audioCtx);
+			
 			await foaRenderer.initialize();
+			console.log("[ASM] FOA Renderer initialized");
 
 			// Gain node creation for the source's volume control
 			const gainNode = this.audioCtx.createGain();
@@ -37,17 +44,22 @@ export default class AmbisonicsSourceManager {
 			foaRenderer.output.connect(gainNode);
 			gainNode.connect(this.masterGain);
 
+			console.log("[ASM] Audio graph connected");
+
+			// Video synchronization events
 			this.videoElement.addEventListener("play", () => {
-				// Video sync on start
+				console.log("[ASM] Video playing, syncing audio");
 				audioElement.currentTime = this.videoElement.currentTime;
-				audioElement.play();
+				audioElement.play().catch(e => console.error("[ASM] Error playing audio:", e));
 			});
 
 			this.videoElement.addEventListener("pause", () => {
+				console.log("[ASM] Video paused, pausing audio");
 				audioElement.pause();
 			});
 
 			this.videoElement.addEventListener("seeked", () => {
+				console.log("[ASM] Video seeked, syncing audio to:", this.videoElement.currentTime);
 				audioElement.currentTime = this.videoElement.currentTime;
 			});
 
@@ -79,64 +91,88 @@ export default class AmbisonicsSourceManager {
 		}
 	}
 
-	// TODO - docs for all functions
-	createRotationMatrix(yaw, pitch, roll) {
-		const cosY = Math.cos(yaw);
-		const sinY = Math.sin(yaw);
+	updateGlobalOrientation(yaw, pitch, roll) {
+		// Store current orientation
+		this.currentOrientation = { yaw, pitch, roll };
+		
+		console.log(`[ASM] Updating orientation - Yaw: ${yaw.toFixed(3)}, Pitch: ${pitch.toFixed(3)}, Roll: ${roll.toFixed(3)}`);
 
-		return {
-			w: 1,		// W component doesn't rotate
-			x: cosY,
-			y: sinY,
-			z: 1
-		};
+		// Update each FOA renderer with the new orientation
+		this.sources.forEach((source, index) => {
+			if (source.foaRenderer && source.foaRenderer.setRotationMatrix4) {
+				try {
+					// Apply rotation offset if any
+					const finalYaw = yaw + source.rotationOffset.yaw;
+					const finalPitch = pitch + source.rotationOffset.pitch;
+					const finalRoll = roll + source.rotationOffset.roll;
+					
+					// Create rotation matrix from Euler angles (Omnitone expects radians)
+					const rotMatrix = this.createRotationMatrix4(finalYaw, finalPitch, finalRoll);
+					source.foaRenderer.setRotationMatrix4(rotMatrix);
+					
+				} catch (error) {
+					console.error(`[ASM] Error updating orientation for source ${index}:`, error);
+				}
+			}
+		});
 	}
 
-	updateGlobalOrientation(yaw, pitch, roll) {
-		this.currentOrientation = { yaw, pitch, roll };
+	// Create 4x4 rotation matrix from Euler angles (in radians)
+	createRotationMatrix4(yaw, pitch, roll) {
+		// Calculate trigonometric values
+		const cy = Math.cos(yaw);
+		const sy = Math.sin(yaw);
+		const cp = Math.cos(pitch);
+		const sp = Math.sin(pitch);
+		const cr = Math.cos(roll);
+		const sr = Math.sin(roll);
 
-		const listener = this.audioCtx.listener;
+		// Create 4x4 rotation matrix (column-major order for WebGL)
+		return [
+			cy * cp,                    sy * cp,                    -sp,        0,
+			cy * sp * sr - sy * cr,     sy * sp * sr + cy * cr,     cp * sr,    0,
+			cy * sp * cr + sy * sr,     sy * sp * cr - cy * sr,     cp * cr,    0,
+			0,                          0,                          0,          1
+		];
+	}
 
-		if (listener.forwardX) {
-			// Compatibility - New Web Audio API
-			const forward = [
-				Math.sin(yaw) * Math.cos(pitch),
-				Math.sin(pitch),
-				-Math.cos(yaw) * Math.cos(pitch)
-			];
-			const up = [0, 1, 0];
+	// Create 3x3 rotation matrix from Euler angles (in degrees) - fallback
+	createRotationMatrix3(yaw, pitch, roll) {
+		const yawRad = yaw * Math.PI / 180;
+		const pitchRad = pitch * Math.PI / 180;
+		const rollRad = roll * Math.PI / 180;
 
-			listener.forwardX.value = forward[0];
-			listener.forwardY.value = forward[1];
-			listener.forwardZ.value = forward[2];
-			listener.upX.value = up[0];
-			listener.upY.value = up[1];
-			listener.upZ.value = up[2];
-		} else if (listener.setOrientation) {
-			// Compatibility - Legacy API
-			listener.setOrientation(
-				Math.sin(yaw) * Math.cos(pitch),
-				Math.sin(pitch),
-				-Math.cos(yaw) * Math.cos(pitch),
-				0, 1, 0
-			);
-		}
+		const cy = Math.cos(yawRad);
+		const sy = Math.sin(yawRad);
+		const cp = Math.cos(pitchRad);
+		const sp = Math.sin(pitchRad);
+		const cr = Math.cos(rollRad);
+		const sr = Math.sin(rollRad);
+
+		return [
+			cy * cp,                    sy * cp,                    -sp,
+			cy * sp * sr - sy * cr,     sy * sp * sr + cy * cr,     cp * sr,
+			cy * sp * cr + sy * sr,     sy * sp * cr - cy * sr,     cp * cr
+		];
 	}
 
 	playAll() {
+		console.log("[ASM] Playing all sources");
 		this.sources.forEach(source => {
 			source.audioElement.currentTime = this.videoElement.currentTime;
-			source.audioElement.play();
+			source.audioElement.play().catch(e => console.error("[ASM] Error playing source:", e));
 		});
 	}
 
 	pauseAll() {
+		console.log("[ASM] Pausing all sources");
 		this.sources.forEach(source => {
 			source.audioElement.pause();
 		});
 	}
 
 	stopAll() {
+		console.log("[ASM] Stopping all sources");
 		this.sources.forEach(source => {
 			source.audioElement.pause();
 			source.audioElement.currentTime = 0;
@@ -144,15 +180,17 @@ export default class AmbisonicsSourceManager {
 	}
 
 	seekAll(time) {
+		console.log("[ASM] Seeking all sources to:", time);
 		this.sources.forEach(source => {
 			source.audioElement.currentTime = time;
 		});
 	}
 
 	checkSynchronization() {
-		this.sources.forEach(source => {
+		this.sources.forEach((source, index) => {
 			const timeDiff = Math.abs(this.videoElement.currentTime - source.audioElement.currentTime);
 			if (timeDiff > 0.15) {
+				console.log(`[ASM] Resyncing source ${index}, diff: ${timeDiff.toFixed(3)}s`);
 				source.audioElement.currentTime = this.videoElement.currentTime;
 			}
 		});
@@ -161,11 +199,13 @@ export default class AmbisonicsSourceManager {
 	setSourceVolume(sourceId, volume) {
 		if (this.sources[sourceId]) {
 			this.sources[sourceId].gainNode.gain.value = volume;
+			console.log(`[ASM] Set source ${sourceId} volume to ${volume}`);
 		}
 	}
 
 	setMasterVolume(volume) {
 		this.masterGain.gain.value = volume;
+		console.log(`[ASM] Set master volume to ${volume}`);
 	}
 
 	getSourcesInfo() {
