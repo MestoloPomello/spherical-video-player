@@ -4,7 +4,7 @@ Project for Web programming for sound and music (UniMi).
 ---
 
 # Instructions
-- **Video**: for size reasons, the used video isn't part of the repository. Download it from the source (i tested with 1440p): [London Park Ducks](https://vimeo.com/215985064) and put it as `/resources/video/london_park.mp4`.
+- **Resources**: for size reasons, the used video and audios aren't part of the repository. Download them from this [Drive folder](https://drive.google.com/drive/folders/1tNWFZLX-UxAmRP5MhseNhcDPRBL5kpvW?usp=sharing) and put the content in `/resources/`.
 
 ---
 
