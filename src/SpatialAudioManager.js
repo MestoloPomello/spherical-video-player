@@ -9,13 +9,13 @@ export default class SpatialAudioManager {
 		this.masterGain.connect(audioCtx.destination);
 
 		this.setupAudioListener();
-		
+
 		console.log("[SAM] SpatialAudioManager initialized");
 	}
 
 	setupAudioListener() {
 		const listener = this.audioCtx.listener;
-		
+
 		// Set listener position at origin
 		if (listener.positionX) {
 			// Compatibility - New Web Audio API
@@ -36,79 +36,109 @@ export default class SpatialAudioManager {
 	}
 
 	async addSpatialSource(
-		audioFilePath,
-		position = { x: 0, y: 0, z: 0 },
-		volume = 1.0
+		/** @type {string} */ audioFilePath,
+		/** @type {SourceOptions} */ options
 	) {
+		const { positions, volumes, timing } = options;
 		try {
 			const audioElement = document.createElement("audio");
-			audioElement.loop = true;
+			audioElement.loop = false;
 			audioElement.src = audioFilePath;
 			audioElement.preload = "auto";
 
-			console.log("[SAM] Audio element created for:", audioFilePath);
-
 			const audioSource = this.audioCtx.createMediaElementSource(audioElement);
-			
-			// Create panner node for 3D positioning
-			// Old version used Omnitone but htis seems to work better
+
+			// Panner
 			const pannerNode = this.audioCtx.createPanner();
 			pannerNode.panningModel = "HRTF";
-			pannerNode.coneInnerAngle = 360; // Full 360 degree sound
+			pannerNode.coneInnerAngle = 360;
 			pannerNode.coneOuterAngle = 360;
 
-			if (pannerNode.positionX) {
-				// New Web Audio API
-				pannerNode.positionX.value = position.x;
-				pannerNode.positionY.value = position.y;
-				pannerNode.positionZ.value = position.z;
-			} else if (pannerNode.setPosition) {
-				// Legacy API
-				pannerNode.setPosition(position.x, position.y, position.z);
-			}
-
-			// Gain node for volume control
+			// Gain
 			const gainNode = this.audioCtx.createGain();
-			gainNode.gain.value = volume;
+			gainNode.gain.value = 0;
 
-			// Audio chain: source -> panner -> gain -> master
+			// Chain
 			audioSource.connect(pannerNode);
 			pannerNode.connect(gainNode);
 			gainNode.connect(this.masterGain);
 
-			// Video synchronization events
-			this.videoElement.addEventListener("play", () => {
-				audioElement.currentTime = this.videoElement.currentTime;
-				audioElement.play().catch(e => console.error("[SAM] Error playing audio:", e));
-			});
-
-			this.videoElement.addEventListener("pause", () => {
-				audioElement.pause();
-			});
-
-			this.videoElement.addEventListener("seeked", () => {
-				audioElement.currentTime = this.videoElement.currentTime;
-			});
-
-			this.videoElement.addEventListener("timeupdate", () => {
-				const timeDiff = Math.abs(this.videoElement.currentTime - audioElement.currentTime);
-				if (timeDiff > 0.1) {
-					audioElement.currentTime = this.videoElement.currentTime;
-				}
-			});
+			// No timing = whole video
+			const effectiveTiming = timing ?? {
+				starting: 0,
+				ending: this.videoElement.duration || Number.MAX_SAFE_INTEGER
+			};
 
 			const sourceObj = {
 				audioElement,
 				audioSource,
 				pannerNode,
 				gainNode,
-				position,
+				positions,
+				volumes,
+				timing: effectiveTiming,
 				id: this.sources.length,
 				name: audioFilePath.split("/").pop()
 			};
-
 			this.sources.push(sourceObj);
-			console.log(`[SAM] Added spatial source: ${sourceObj.name} at position:`, position);
+
+			const isStatic =
+				positions.starting.x === positions.ending.x &&
+				positions.starting.y === positions.ending.y &&
+				positions.starting.z === positions.ending.z &&
+				volumes.starting === volumes.ending;
+
+			const update = () => {
+				const t = this.videoElement.currentTime;
+
+				if (t >= effectiveTiming.starting && t <= effectiveTiming.ending) {
+					// if (audioElement.paused) {
+					// 	audioElement.currentTime = Math.max(0, t - effectiveTiming.starting);
+					// 	audioElement.play().catch(() => {});
+					// }
+
+					let pos, vol;
+
+					if (isStatic) {
+						pos = positions.starting;
+						vol = volumes.starting;
+					} else {
+						const progress =
+							(t - effectiveTiming.starting) /
+							(effectiveTiming.ending - effectiveTiming.starting);
+
+						pos = {
+							x: positions.starting.x + (positions.ending.x - positions.starting.x) * progress,
+							y: positions.starting.y + (positions.ending.y - positions.starting.y) * progress,
+							z: positions.starting.z + (positions.ending.z - positions.starting.z) * progress
+						};
+
+						vol =
+							volumes.starting +
+							(volumes.ending - volumes.starting) * progress;
+					}
+
+					if (pannerNode.positionX) {
+						pannerNode.positionX.value = pos.x;
+						pannerNode.positionY.value = pos.y;
+						pannerNode.positionZ.value = pos.z;
+					} else {
+						pannerNode.setPosition(pos.x, pos.y, pos.z);
+					}
+
+					gainNode.gain.value = vol;
+				} else {
+					if (!audioElement.paused) {
+						audioElement.pause();
+					}
+					gainNode.gain.value = 0;
+				}
+
+				requestAnimationFrame(update);
+			};
+			requestAnimationFrame(update);
+
+			console.log(`[SAM] Added ${isStatic ? "static" : "moving"} spatial source: ${sourceObj.name}`);
 			return sourceObj;
 
 		} catch (error) {
@@ -151,7 +181,7 @@ export default class SpatialAudioManager {
 	setSourcePosition(sourceId, position) {
 		if (this.sources[sourceId] && this.sources[sourceId].pannerNode) {
 			const panner = this.sources[sourceId].pannerNode;
-			
+
 			if (panner.positionX) {
 				panner.positionX.value = position.x;
 				panner.positionY.value = position.y;
@@ -159,7 +189,7 @@ export default class SpatialAudioManager {
 			} else if (panner.setPosition) {
 				panner.setPosition(position.x, position.y, position.z);
 			}
-			
+
 			this.sources[sourceId].position = position;
 		}
 	}

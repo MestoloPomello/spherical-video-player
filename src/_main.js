@@ -2,9 +2,6 @@ import "aframe";
 import initPlayerCommands from "./initPlayerCommands.js";
 import SpatialAudioManager from "./SpatialAudioManager.js";
 
-// TODO - creation of a drive folder with the video and audio sources to be downloaded
-// in a single package
-
 window.addEventListener("load", async () => {
 	initPlayerCommands();
 
@@ -24,19 +21,108 @@ window.addEventListener("load", async () => {
 		// Set initial volume for spatial audio
 		spatialManager.setMasterVolume(0.5);
 
-		// Add spatial sound sources with precise positioning
+		// Ducks sounds
+		const ducksPos = { x: -8, y: 0, z: 3 };
 		await spatialManager.addSpatialSource(
 			"./resources/audio/ducks.wav",
-			{ x: -8, y: 0, z: 3 }, // 8 units left, 3 units back 
-			0.9
+			{
+				positions: {
+					starting: ducksPos,
+					ending: ducksPos
+				},
+				volumes: {
+					starting: 2,
+					ending: 2
+				}
+			}
 		);
 
-		// Example: add another source in a different position
-		// await spatialManager.addSpatialSource(
-		//     "./resources/audio/birds.wav",
-		//     { x: -5, y: 2, z: 5 }, // left, slightly up, behind
-		//     0.6
-		// );
+		// Water - multiple panner nodes for simulating the river
+		const waterPos1 = { x: -3, y: 0, z: 0 };
+		await spatialManager.addSpatialSource(
+			"./resources/audio/water.wav",
+			{
+				positions: {
+					starting: waterPos1,
+					ending: waterPos1
+				},
+				volumes: {
+					starting: 2,
+					ending: 2
+				}
+			}
+		);
+
+		const waterPos2 = { x: -3, y: 0, z: 4 };
+		await spatialManager.addSpatialSource(
+			"./resources/audio/water.wav",
+			{
+				positions: {
+					starting: waterPos2,
+					ending: waterPos2
+				},
+				volumes: {
+					starting: 1.7,
+					ending: 1.7 
+				}
+			}
+		);
+
+		const waterPos3 = { x: -3, y: 0, z: -4 };
+		await spatialManager.addSpatialSource(
+			"./resources/audio/water.wav",
+			{
+				positions: {
+					starting: waterPos3,
+					ending: waterPos3
+				},
+				volumes: {
+					starting: 1.7,
+					ending: 1.7 
+				}
+			}
+		);
+
+		// Steps following the man - 2 sources:
+		// 1. while the man approaches
+		// 2. while the man goes away
+		await spatialManager.addSpatialSource(
+			"./resources/audio/steps.wav",
+			{
+				positions: {
+					starting: { x: 0, y: 0, z: -10 },  // far, forward 
+					ending:   { x: 2, y: 0, z: -2 }    // near, right
+				},
+				volumes: {
+					starting: 0.3,
+					ending: 1.0
+				},
+				timing: {
+					starting: 12,
+					ending: 17
+				}
+			}
+		);
+
+		await spatialManager.addSpatialSource(
+			"./resources/audio/steps.wav",
+			{
+				positions: {
+					starting: { x: 2, y: 0, z: -2 },	// near, right
+					ending:   { x: 0, y: 0, z: 5 }		// far, back 
+				},
+				volumes: {
+					starting: 1.0,
+					ending: 0.2
+				},
+				timing: {
+					starting: 17,
+					ending: 25
+				}
+			}
+		);
+
+		// TODO - fix steps non si sentono
 
 		// Update listener orientation based on camera rotation
 		AFRAME.registerComponent("spatial-listener-sync", {
@@ -60,6 +146,7 @@ window.addEventListener("load", async () => {
 
 		// Cleanup when the page is closed
 		window.addEventListener("beforeunload", stopSyncTimer);
+
 
 		// Local functions
 
