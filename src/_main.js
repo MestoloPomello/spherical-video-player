@@ -94,12 +94,12 @@ window.addEventListener("load", async () => {
 					ending:   { x: 2, y: 0, z: -2 }    // near, right
 				},
 				volumes: {
-					starting: 0.3,
-					ending: 1.0
+					starting: 20,
+					ending: 70
 				},
 				timing: {
 					starting: 12,
-					ending: 17
+					ending: 18
 				}
 			}
 		);
@@ -112,17 +112,19 @@ window.addEventListener("load", async () => {
 					ending:   { x: 0, y: 0, z: 5 }		// far, back 
 				},
 				volumes: {
-					starting: 1.0,
-					ending: 0.2
+					starting: 70,
+					ending: 10
 				},
 				timing: {
-					starting: 17,
-					ending: 25
+					starting: 17.2,
+					ending: 23.5
 				}
 			}
 		);
 
-		// TODO - fix steps non si sentono
+		// TODO - time counter for progress bar
+		// TODO - steps sound for everyone
+		// TODO - check for other sounds (i.e. birds)
 
 		// Update listener orientation based on camera rotation
 		AFRAME.registerComponent("spatial-listener-sync", {

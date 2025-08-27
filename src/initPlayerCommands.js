@@ -68,6 +68,7 @@ export default function() {
 
 		// Stop all spatial sources
 		if (window.spatialManager) {
+			window.spatialManager.pause = true;
 			window.spatialManager.stopAll();
 		}
 
@@ -153,6 +154,7 @@ export default function() {
 
 			// Play all spatial sources
 			if (window.spatialManager) {
+				window.spatialManager.pause = false;
 				window.spatialManager.playAll();
 			}
 		} else {
@@ -161,6 +163,7 @@ export default function() {
 
 			// Pause all spatial sources
 			if (window.spatialManager) {
+				window.spatialManager.pause = true;
 				window.spatialManager.pauseAll();
 			}
 		}

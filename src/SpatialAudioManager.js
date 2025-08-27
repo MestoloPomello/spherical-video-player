@@ -8,6 +8,8 @@ export default class SpatialAudioManager {
 		this.masterGain = audioCtx.createGain();
 		this.masterGain.connect(audioCtx.destination);
 
+		this.pause = true;
+
 		this.setupAudioListener();
 
 		console.log("[SAM] SpatialAudioManager initialized");
@@ -89,13 +91,13 @@ export default class SpatialAudioManager {
 				volumes.starting === volumes.ending;
 
 			const update = () => {
-				const t = this.videoElement.currentTime;
+				const { currentTime } = this.videoElement;
+				if (this.isSourceInTimeRange(sourceObj.id)) {
 
-				if (t >= effectiveTiming.starting && t <= effectiveTiming.ending) {
-					// if (audioElement.paused) {
-					// 	audioElement.currentTime = Math.max(0, t - effectiveTiming.starting);
-					// 	audioElement.play().catch(() => {});
-					// }
+					if (!this.pause && audioElement.paused) {
+						audioElement.currentTime = Math.max(0, currentTime - effectiveTiming.starting);
+						audioElement.play().catch(() => {});
+					}
 
 					let pos, vol;
 
@@ -104,7 +106,7 @@ export default class SpatialAudioManager {
 						vol = volumes.starting;
 					} else {
 						const progress =
-							(t - effectiveTiming.starting) /
+							(currentTime - effectiveTiming.starting) /
 							(effectiveTiming.ending - effectiveTiming.starting);
 
 						pos = {
@@ -131,7 +133,6 @@ export default class SpatialAudioManager {
 					if (!audioElement.paused) {
 						audioElement.pause();
 					}
-					gainNode.gain.value = 0;
 				}
 
 				requestAnimationFrame(update);
@@ -203,11 +204,25 @@ export default class SpatialAudioManager {
 		};
 	}
 
+	isSourceInTimeRange(id) {
+		const { currentTime } = this.videoElement;
+		if (
+			currentTime >= this.sources[id].timing.starting &&
+			currentTime <= this.sources[id].timing.ending
+		) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	playAll() {
 		console.log("[SAM] Playing all sources");
 		this.sources.forEach(source => {
 			source.audioElement.currentTime = this.videoElement.currentTime;
-			source.audioElement.play().catch(e => console.error("[SAM] Error playing source:", e));
+			if (this.isSourceInTimeRange(source.id)) {
+				source.audioElement.play().catch(e => console.error("[SAM] Error playing source:", e));
+			}
 		});
 	}
 
