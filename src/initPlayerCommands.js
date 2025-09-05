@@ -19,6 +19,29 @@ export default function() {
 	const fullscreenBtn = document.getElementById("fullscreenBtn");
 	const volumeIcon = document.getElementById("volumeIcon");
 
+	// Create tooltip element for progress bar
+	const progressTooltip = document.createElement("div");
+	progressTooltip.className = "progress-tooltip";
+	progressTooltip.style.cssText = `
+		position: absolute;
+		bottom: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		background: rgba(0, 0, 0, 0.8);
+		color: white;
+		padding: 4px 8px;
+		border-radius: 4px;
+		font-size: 12px;
+		font-family: monospace;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.2s;
+		margin-bottom: 8px;
+		z-index: 1000;
+	`;
+	progressBar.appendChild(progressTooltip);
+
 	// MUTE VIDEO AUDIO - Keep only Ambisonics audio
 	videoElement.volume = 0;
 	videoElement.muted = true;
@@ -28,7 +51,6 @@ export default function() {
 	stopBtn.innerHTML = ICONS.stop;
 	volumeIcon.innerHTML = ICONS.volume_low;
 	fullscreenBtn.innerHTML = ICONS.expand;
-
 
 	// Event listeners
 
@@ -89,6 +111,33 @@ export default function() {
 		handleMute();
 	});
 
+	// Progress bar tooltip functionality
+	progressBar.addEventListener("mouseenter", () => {
+		progressTooltip.style.opacity = "1";
+	});
+
+	progressBar.addEventListener("mouseleave", () => {
+		progressTooltip.style.opacity = "0";
+	});
+
+	progressBar.addEventListener("mousemove", (event) => {
+		const rect = progressBar.getBoundingClientRect();
+		const pos = (event.clientX - rect.left) / rect.width;
+		const time = pos * videoElement.duration;
+		
+		// Format time as MM:SS
+		const minutes = Math.floor(time / 60);
+		const seconds = Math.floor(time % 60);
+		const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+		
+		progressTooltip.textContent = formattedTime;
+		
+		// Position tooltip at mouse position
+		const tooltipX = event.clientX - rect.left;
+		progressTooltip.style.left = `${tooltipX}px`;
+		progressTooltip.style.transform = "translateX(-50%)";
+	});
+
 	// Progress bar
 	videoElement.addEventListener("timeupdate", () => {
 		const percent = (videoElement.currentTime / videoElement.duration) * 100;
@@ -130,7 +179,6 @@ export default function() {
 	window.addEventListener("load", () => {
 		playerContainer.focus();
 	});
-
 
 	// Local functions and handlers
 

@@ -116,5 +116,39 @@
 /* Used to hide the A-Frame included fullscreen button */
 .a-enter-vr-button,
 .a-fullscreen-button {
-  display: none !important;
+	display: none !important;
+}
+
+.progress-bar {
+	position: relative;
+	cursor: pointer;
+}
+
+.progress-tooltip {
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(0, 0, 0, 0.8);
+	color: white;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-family: monospace;
+	white-space: nowrap;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s ease-in-out;
+	margin-bottom: 8px;
+	z-index: 1000;
+}
+
+.progress-tooltip::after {
+	content: '';
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	border: 4px solid transparent;
+	border-top-color: rgba(0, 0, 0, 0.8);
 }

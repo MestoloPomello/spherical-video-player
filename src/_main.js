@@ -16,7 +16,7 @@ window.addEventListener("load", async () => {
 
 	try {
 		const spatialManager = new SpatialAudioManager(audioCtx, videoElement);
-		window.spatialManager = spatialManager; // Nome compatibile con i controlli
+		window.spatialManager = spatialManager;
 
 		// Set initial volume for spatial audio
 		spatialManager.setMasterVolume(0.5);
@@ -85,7 +85,6 @@ window.addEventListener("load", async () => {
 
 		// Steps following the man - 2 sources:
 		// 1. while the man approaches
-		// 2. while the man goes away
 		await spatialManager.addSpatialSource(
 			"./resources/audio/steps.wav",
 			{
@@ -99,11 +98,12 @@ window.addEventListener("load", async () => {
 				},
 				timing: {
 					starting: 12,
-					ending: 18
+					ending: 17
 				}
 			}
 		);
 
+		// 2. while the man goes away
 		await spatialManager.addSpatialSource(
 			"./resources/audio/steps.wav",
 			{
@@ -116,13 +116,12 @@ window.addEventListener("load", async () => {
 					ending: 10
 				},
 				timing: {
-					starting: 17.2,
+					starting: 16.2,
 					ending: 23.5
 				}
 			}
 		);
 
-		// TODO - time counter for progress bar
 		// TODO - steps sound for everyone
 		// TODO - check for other sounds (i.e. birds)
 
