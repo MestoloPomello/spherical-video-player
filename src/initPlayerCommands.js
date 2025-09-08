@@ -84,7 +84,7 @@ export default function() {
 	window.addEventListener("wheel", (e) => {
 		const cam = camera.getAttribute("camera");
 		let newFov = cam.fov + (e.deltaY > 0 ? 2 : -2);
-		newFov = Math.max(30, Math.min(100, newFov)); // Limits
+		newFov = Math.max(30, Math.min(100, newFov)); // Zoom limits 
 		camera.setAttribute("camera", "fov", newFov);
 	});
 

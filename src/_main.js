@@ -37,6 +37,21 @@ window.addEventListener("load", async () => {
 			}
 		);
 
+		const noisePos = { x: 7.5, y: 0, z: 0 };
+		await spatialManager.addSpatialSource(
+			"./resources/audio/noise.wav",
+			{
+				positions: {
+					starting: noisePos,
+					ending: noisePos
+				},
+				volumes: {
+					starting: 5,
+					ending: 5
+				}
+			}
+		);
+
 		// Water - multiple panner nodes for simulating the river
 		const waterPos1 = { x: -3, y: 0, z: 0 };
 		await spatialManager.addSpatialSource(
@@ -122,8 +137,46 @@ window.addEventListener("load", async () => {
 			}
 		);
 
-		// TODO - steps sound for everyone
-		// TODO - check for other sounds (i.e. birds)
+		// People talking - first: people getting closer
+		// TODO - check for a better sound
+		// const stationaryPeopleVolume = 7;
+		// await spatialManager.addSpatialSource(
+		// 	"./resources/audio/crowd.wav",
+		// 	{
+		// 		positions: {
+		// 			starting: { x: 5, y: 0, z: -5 },	// near, right
+		// 			ending:   { x: 0, y: 0, z: -5 }		// far, back 
+		// 		},
+		// 		volumes: {
+		// 			starting: 0,
+		// 			ending: stationaryPeopleVolume 
+		// 		},
+		// 		timing: {
+		// 			starting: 0,
+		// 			ending: 9
+		// 		}
+		// 	}
+		// );
+		//
+		// // People talking - second: people become stationary near the source
+		// await spatialManager.addSpatialSource(
+		// 	"./resources/audio/crowd.wav",
+		// 	{
+		// 		positions: {
+		// 			starting: { x: 0, y: 0, z: -5 },	// near, right
+		// 			ending:   { x: 0, y: 0, z: -5 }		// far, back 
+		// 		},
+		// 		volumes: {
+		// 			starting: stationaryPeopleVolume,
+		// 			ending: stationaryPeopleVolume
+		// 		},
+		// 		timing: {
+		// 			starting: 9,
+		// 			ending: 75
+		// 		}
+		// 	}
+		// );
+		
 
 		// Update listener orientation based on camera rotation
 		AFRAME.registerComponent("spatial-listener-sync", {
