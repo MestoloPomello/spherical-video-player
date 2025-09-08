@@ -18,6 +18,7 @@ export default function() {
 	const progressFilled = document.getElementById("progressFilled");
 	const fullscreenBtn = document.getElementById("fullscreenBtn");
 	const volumeIcon = document.getElementById("volumeIcon");
+	const camera = document.getElementById("camera");
 
 	// Create tooltip element for progress bar
 	const progressTooltip = document.createElement("div");
@@ -77,6 +78,14 @@ export default function() {
 		if (mouseY > windowHeight - 80) {
 			showBar();
 		}
+	});
+
+	// Camera zoom with mouse wheel
+	window.addEventListener("wheel", (e) => {
+		const cam = camera.getAttribute("camera");
+		let newFov = cam.fov + (e.deltaY > 0 ? 2 : -2);
+		newFov = Math.max(30, Math.min(100, newFov)); // Limits
+		camera.setAttribute("camera", "fov", newFov);
 	});
 
 	playBtn.addEventListener("click", () => {
