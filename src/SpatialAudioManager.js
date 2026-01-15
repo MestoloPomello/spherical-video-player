@@ -28,7 +28,7 @@ export default class SpatialAudioManager {
     }
 
     async addAmbisonicsSource(audioFilePath, options) {
-        const { timing, volume = 1 } = options;
+        const { timing, volume = 1, rotation = { yaw: 0, pitch: 0, roll: 0 } } = options;
 
         try {
             const audioElement = document.createElement("audio");
@@ -40,15 +40,31 @@ export default class SpatialAudioManager {
             // Create media element source
             const audioSource = this.audioCtx.createMediaElementSource(audioElement);
 
+            // Create a dedicated FOA renderer for this source (to apply independent rotation)
+            const sourceRenderer = Omnitone.createFOARenderer(this.audioCtx, {
+                renderingMode: 'ambisonic'
+            });
+            await sourceRenderer.initialize();
+
+            // Apply static rotation to align the Ambisonics scene
+            if (rotation.yaw !== 0 || rotation.pitch !== 0 || rotation.roll !== 0) {
+                const rotMatrix = this.eulerToRotationMatrix(
+                    rotation.yaw * Math.PI / 180,
+                    rotation.pitch * Math.PI / 180,
+                    rotation.roll * Math.PI / 180
+                );
+                sourceRenderer.setRotationMatrix4(rotMatrix);
+            }
+
             // Create gain node for this source
             const gainNode = this.audioCtx.createGain();
             gainNode.gain.value = 0;
 
-            // Connect: source -> gain -> FOA renderer
-            audioSource.connect(gainNode);
-            gainNode.connect(this.foaRenderer.input);
+            // Connect: source -> sourceRenderer -> gain -> master
+            audioSource.connect(sourceRenderer.input);
+            sourceRenderer.output.connect(gainNode);
+            gainNode.connect(this.masterGain);
 
-            // No timing = whole video
             const effectiveTiming = timing ?? {
                 starting: 0,
                 ending: this.videoElement.duration || Number.MAX_SAFE_INTEGER
@@ -57,8 +73,10 @@ export default class SpatialAudioManager {
             const sourceObj = {
                 audioElement,
                 audioSource,
+                sourceRenderer,
                 gainNode,
                 volume,
+                rotation,
                 timing: effectiveTiming,
                 id: this.sources.length,
                 name: audioFilePath.split("/").pop(),
@@ -67,7 +85,6 @@ export default class SpatialAudioManager {
 
             this.sources.push(sourceObj);
 
-            // Update loop for this source
             const update = () => {
                 const { currentTime } = this.videoElement;
 
@@ -76,8 +93,6 @@ export default class SpatialAudioManager {
                         audioElement.currentTime = Math.max(0, currentTime - effectiveTiming.starting);
                         audioElement.play().catch(() => { });
                     }
-
-                    // Set volume
                     gainNode.gain.value = volume;
                 } else {
                     if (!audioElement.paused) {
@@ -89,7 +104,7 @@ export default class SpatialAudioManager {
             };
             requestAnimationFrame(update);
 
-            console.log(`[SAM] Added Ambisonics FOA source: ${sourceObj.name}`);
+            console.log(`[SAM] Added Ambisonics FOA source: ${sourceObj.name} (rotation: yaw=${rotation.yaw}°, pitch=${rotation.pitch}°, roll=${rotation.roll}°)`);
             return sourceObj;
 
         } catch (error) {
@@ -99,10 +114,20 @@ export default class SpatialAudioManager {
     }
 
     updateListenerOrientation(yaw, pitch, roll) {
-        // Convert Euler angles to rotation matrix
-        // Omnitone uses setRotationMatrix4() with a 16-element array (column-major 4x4 matrix)
-        const rotationMatrix = this.eulerToRotationMatrix(yaw, pitch, roll);
-        this.foaRenderer.setRotationMatrix4(rotationMatrix);
+        // Update only sources that don't have their own renderer
+        // (sources with independent rotation have their own renderer)
+        this.sources.forEach(source => {
+            if (source.type === 'ambisonics' && source.sourceRenderer) {
+                // Each source has its own renderer with static rotation
+                // The listener orientation is applied on top of source rotation
+                const totalYaw = yaw + (source.rotation?.yaw || 0) * Math.PI / 180;
+                const totalPitch = pitch + (source.rotation?.pitch || 0) * Math.PI / 180;
+                const totalRoll = roll + (source.rotation?.roll || 0) * Math.PI / 180;
+
+                const rotationMatrix = this.eulerToRotationMatrix(totalYaw, totalPitch, totalRoll);
+                source.sourceRenderer.setRotationMatrix4(rotationMatrix);
+            }
+        });
     }
 
     eulerToRotationMatrix(yaw, pitch, roll) {

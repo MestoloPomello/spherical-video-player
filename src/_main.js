@@ -24,38 +24,55 @@ window.addEventListener("load", async () => {
         // Set initial volume
         spatialManager.setMasterVolume(0.5);
 
-        // Add Ambisonics FOA sources
-        // Ogni file audio deve essere un file Ambisonics FOA a 4 canali (W, X, Y, Z)
-
-        // Ducks - full duration
+        // Ducks on the left
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/ducks.wav",
             {
-                volume: 2
+                volume: 1,
+                rotation: { yaw: 90, pitch: 0, roll: 0 } // Adjust these values!
             }
         );
 
-        // Noise - full duration
+        // Noise from the street (right side)
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/noise.wav",
             {
-                volume: 1.5
+                volume: 2,
+                rotation: { yaw: -90, pitch: 0, roll: 0 }
             }
         );
 
-        // Water ambience - full duration
+        // Water - left side, multiple instances
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/water.wav",
             {
-                volume: 2
+                volume: 2,
+                rotation: { yaw: 60, pitch: 0, roll: 0 }
             }
         );
 
-        // Steps - man approaching (12-17s)
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volume: 1.7,
+                rotation: { yaw: 65, pitch: 0, roll: 0 }
+            }
+        );
+
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volume: 1.7,
+                rotation: { yaw: 55, pitch: 0, roll: 0 }
+            }
+        );
+
+        // Steps approaching - from front
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/steps.wav",
             {
-                volume: 3,
+                volume: 45,
+                rotation: { yaw: 0, pitch: 0, roll: 0 }, 
                 timing: {
                     starting: 12,
                     ending: 17
@@ -63,29 +80,18 @@ window.addEventListener("load", async () => {
             }
         );
 
-        // Steps - man walking away (16.2-23.5s)
+        // Steps walking away
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/steps.wav",
             {
-                volume: 3,
+                volume: 40,
+                rotation: { yaw: 180, pitch: 0, roll: 0 },
                 timing: {
                     starting: 16.2,
                     ending: 23.5
                 }
             }
         );
-
-        // Crowd/people talking
-        // await spatialManager.addAmbisonicsSource(
-        //   "./resources/audio/crowd_foa.wav",
-        //   {
-        //     volume: 2,
-        //     timing: {
-        //       starting: 0,
-        //       ending: 75
-        //     }
-        //   }
-        // );
 
         // Update listener orientation based on camera rotation
         AFRAME.registerComponent("spatial-listener-sync", {
