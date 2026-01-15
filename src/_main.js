@@ -3,222 +3,129 @@ import initPlayerCommands from "./initPlayerCommands.js";
 import SpatialAudioManager from "./SpatialAudioManager.js";
 
 window.addEventListener("load", async () => {
-	initPlayerCommands();
+    initPlayerCommands();
 
-	let syncTimer;
+    let syncTimer;
 
-	const videoElement = document.getElementById("video360");
-	const cameraElement = document.getElementById("camera");
+    const videoElement = document.getElementById("video360");
+    const cameraElement = document.getElementById("camera");
 
-	// Initialize AudioContext
-	const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-	window.audioCtx = audioCtx;
+    // Initialize AudioContext
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    window.audioCtx = audioCtx;
 
-	try {
-		const spatialManager = new SpatialAudioManager(audioCtx, videoElement);
-		window.spatialManager = spatialManager;
+    try {
+        const spatialManager = new SpatialAudioManager(audioCtx, videoElement);
+        window.spatialManager = spatialManager;
 
-		// Set initial volume for spatial audio
-		spatialManager.setMasterVolume(0.5);
+        // Initialize Omnitone (loads HRIR files)
+        await spatialManager.initialize();
 
-		// Ducks sounds
-		const ducksPos = { x: -8, y: 0, z: 3 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/ducks.wav",
-			{
-				positions: {
-					starting: ducksPos,
-					ending: ducksPos
-				},
-				volumes: {
-					starting: 2,
-					ending: 2
-				}
-			}
-		);
+        // Set initial volume
+        spatialManager.setMasterVolume(0.5);
 
-		const noisePos = { x: 7.5, y: 0, z: 0 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/noise.wav",
-			{
-				positions: {
-					starting: noisePos,
-					ending: noisePos
-				},
-				volumes: {
-					starting: 5,
-					ending: 5
-				}
-			}
-		);
+        // Add Ambisonics FOA sources
+        // Ogni file audio deve essere un file Ambisonics FOA a 4 canali (W, X, Y, Z)
 
-		// Water - multiple panner nodes for simulating the river
-		const waterPos1 = { x: -3, y: 0, z: 0 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/water.wav",
-			{
-				positions: {
-					starting: waterPos1,
-					ending: waterPos1
-				},
-				volumes: {
-					starting: 2,
-					ending: 2
-				}
-			}
-		);
+        // Ducks - full duration
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/ducks.wav",
+            {
+                volume: 2
+            }
+        );
 
-		const waterPos2 = { x: -3, y: 0, z: 4 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/water.wav",
-			{
-				positions: {
-					starting: waterPos2,
-					ending: waterPos2
-				},
-				volumes: {
-					starting: 1.7,
-					ending: 1.7 
-				}
-			}
-		);
+        // Noise - full duration
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/noise.wav",
+            {
+                volume: 1.5
+            }
+        );
 
-		const waterPos3 = { x: -3, y: 0, z: -4 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/water.wav",
-			{
-				positions: {
-					starting: waterPos3,
-					ending: waterPos3
-				},
-				volumes: {
-					starting: 1.7,
-					ending: 1.7 
-				}
-			}
-		);
+        // Water ambience - full duration
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volume: 2
+            }
+        );
 
-		// Steps following the man - 2 sources:
-		// 1. while the man approaches
-		await spatialManager.addSpatialSource(
-			"./resources/audio/steps.wav",
-			{
-				positions: {
-					starting: { x: 0, y: 0, z: -10 },  // far, forward 
-					ending:   { x: 2, y: 0, z: -2 }    // near, right
-				},
-				volumes: {
-					starting: 20,
-					ending: 70
-				},
-				timing: {
-					starting: 12,
-					ending: 17
-				}
-			}
-		);
+        // Steps - man approaching (12-17s)
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/steps.wav",
+            {
+                volume: 3,
+                timing: {
+                    starting: 12,
+                    ending: 17
+                }
+            }
+        );
 
-		// 2. while the man goes away
-		await spatialManager.addSpatialSource(
-			"./resources/audio/steps.wav",
-			{
-				positions: {
-					starting: { x: 2, y: 0, z: -2 },	// near, right
-					ending:   { x: 0, y: 0, z: 5 }		// far, back 
-				},
-				volumes: {
-					starting: 70,
-					ending: 10
-				},
-				timing: {
-					starting: 16.2,
-					ending: 23.5
-				}
-			}
-		);
+        // Steps - man walking away (16.2-23.5s)
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/steps.wav",
+            {
+                volume: 3,
+                timing: {
+                    starting: 16.2,
+                    ending: 23.5
+                }
+            }
+        );
 
-		// People talking - first: people getting closer
-		// TODO - check for a better sound
-		// const stationaryPeopleVolume = 7;
-		// await spatialManager.addSpatialSource(
-		// 	"./resources/audio/crowd.wav",
-		// 	{
-		// 		positions: {
-		// 			starting: { x: 5, y: 0, z: -5 },	// near, right
-		// 			ending:   { x: 0, y: 0, z: -5 }		// far, back 
-		// 		},
-		// 		volumes: {
-		// 			starting: 0,
-		// 			ending: stationaryPeopleVolume 
-		// 		},
-		// 		timing: {
-		// 			starting: 0,
-		// 			ending: 9
-		// 		}
-		// 	}
-		// );
-		//
-		// // People talking - second: people become stationary near the source
-		// await spatialManager.addSpatialSource(
-		// 	"./resources/audio/crowd.wav",
-		// 	{
-		// 		positions: {
-		// 			starting: { x: 0, y: 0, z: -5 },	// near, right
-		// 			ending:   { x: 0, y: 0, z: -5 }		// far, back 
-		// 		},
-		// 		volumes: {
-		// 			starting: stationaryPeopleVolume,
-		// 			ending: stationaryPeopleVolume
-		// 		},
-		// 		timing: {
-		// 			starting: 9,
-		// 			ending: 75
-		// 		}
-		// 	}
-		// );
-		
+        // Crowd/people talking
+        // await spatialManager.addAmbisonicsSource(
+        //   "./resources/audio/crowd_foa.wav",
+        //   {
+        //     volume: 2,
+        //     timing: {
+        //       starting: 0,
+        //       ending: 75
+        //     }
+        //   }
+        // );
 
-		// Update listener orientation based on camera rotation
-		AFRAME.registerComponent("spatial-listener-sync", {
-			tick: function () {
-				const rotation = cameraElement.getAttribute("rotation");
+        // Update listener orientation based on camera rotation
+        AFRAME.registerComponent("spatial-listener-sync", {
+            tick: function () {
+                const rotation = cameraElement.getAttribute("rotation");
 
-				// Convert A-Frame rotation to radians
-				const yaw = -rotation.y * Math.PI / 180;   // Horizontal rotation
-				const pitch = -rotation.x * Math.PI / 180; // Vertical rotation  
-				const roll = -rotation.z * Math.PI / 180;  // Roll rotation
+                // Convert A-Frame rotation to radians (Euler angles)
+                const yaw = -rotation.y * Math.PI / 180;   // Horizontal
+                const pitch = -rotation.x * Math.PI / 180; // Vertical  
+                const roll = -rotation.z * Math.PI / 180;  // Roll
 
-				spatialManager.updateListenerOrientation(yaw, pitch, roll);
-			}
-		});
+                spatialManager.updateListenerOrientation(yaw, pitch, roll);
+            }
+        });
 
-		cameraElement.setAttribute("spatial-listener-sync", "");
+        cameraElement.setAttribute("spatial-listener-sync", "");
 
-		videoElement.addEventListener("play", startSyncTimer);
-		videoElement.addEventListener("pause", stopSyncTimer);
-		videoElement.addEventListener("ended", stopSyncTimer);
+        videoElement.addEventListener("play", startSyncTimer);
+        videoElement.addEventListener("pause", stopSyncTimer);
+        videoElement.addEventListener("ended", stopSyncTimer);
 
-		// Cleanup when the page is closed
-		window.addEventListener("beforeunload", stopSyncTimer);
+        window.addEventListener("beforeunload", stopSyncTimer);
 
+        // Local functions
+        function startSyncTimer() {
+            syncTimer = setInterval(() => {
+                if (window.spatialManager && !videoElement.paused) {
+                    window.spatialManager.checkSynchronization();
+                }
+            }, 500);
+        }
 
-		// Local functions
+        function stopSyncTimer() {
+            if (syncTimer) {
+                clearInterval(syncTimer);
+                syncTimer = null;
+            }
+        }
 
-		function startSyncTimer() {
-			syncTimer = setInterval(() => {
-				if (window.spatialManager && !videoElement.paused) {
-					window.spatialManager.checkSynchronization();
-				}
-			}, 500);
-		}
-
-		function stopSyncTimer() {
-			if (syncTimer) {
-				clearInterval(syncTimer);
-				syncTimer = null;
-			}
-		}
-	} catch (error) {
-		console.error("[Main] Error initializing Spatial Audio Manager:", error);
-	}
+    } catch (error) {
+        console.error("[Main] Error initializing Spatial Audio Manager:", error);
+    }
 });
