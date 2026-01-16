@@ -91,8 +91,8 @@ window.addEventListener("load", async () => {
             "./resources/audio/steps.wav",
             {
                 volumes: {
-                    starting: 1,
-                    ending: 30 
+                    starting: 5,
+                    ending: 20 
                 },
                 rotations: {
                     starting: { yaw: 0, pitch: 0, roll: 0 }, // Start: front
@@ -100,7 +100,7 @@ window.addEventListener("load", async () => {
                 },
                 timing: {
                     starting: 12,
-                    ending: 17
+                    ending: 16.8
                 }
             }
         );
@@ -110,8 +110,8 @@ window.addEventListener("load", async () => {
             "./resources/audio/steps.wav",
             {
                 volumes: {
-                    starting: 30,
-                    ending: 1
+                    starting: 20,
+                    ending: 5
                 },
                 rotations: {
                     starting: { yaw: -90, pitch: 0, roll: 0 }, // Start: right side
