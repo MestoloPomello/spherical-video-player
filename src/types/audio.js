@@ -15,17 +15,17 @@
 /**
  * @typedef Rotations
  * @property {Rotation} starting
- * @property {Rotation} ending
+ * @property {Rotation} [ending]
  */
 
 /**
  * @typedef Volumes
  * @property {number} starting
- * @property {number} ending
+ * @property {number} [ending]
  */
 
 /**
  * @typedef Timing
  * @property {number} starting
- * @property {number} ending
+ * @property {number} [ending]
  */

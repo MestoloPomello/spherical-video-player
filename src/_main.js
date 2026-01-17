@@ -26,7 +26,7 @@ window.addEventListener("load", async () => {
             "./resources/audio/ducks.wav",
             {
                 volumes: {
-                    starting: 2
+                    starting: 1
                 },
                 rotations: {
                     starting: { yaw: 90, pitch: 0, roll: 0 }
@@ -34,7 +34,7 @@ window.addEventListener("load", async () => {
             }
         );
 
-        // Noise from the street
+        // Noise from the street (on the right at the start)
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/noise.wav",
             {
@@ -48,6 +48,18 @@ window.addEventListener("load", async () => {
         );
 
         // River water, multiple instances
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volumes: {
+                    starting: 1.7
+                },
+                rotations: {
+                    starting: { yaw: 55, pitch: 0, roll: 0 }
+                }
+            }
+        );
+
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/water.wav",
             {
@@ -72,21 +84,9 @@ window.addEventListener("load", async () => {
             }
         );
 
-        await spatialManager.addAmbisonicsSource(
-            "./resources/audio/water.wav",
-            {
-                volumes: {
-                    starting: 1.7
-                },
-                rotations: {
-                    starting: { yaw: 55, pitch: 0, roll: 0 }
-                }
-            }
-        );
-
         // Steps with dynamic movement - single file with interpolation
 
-        // Approaching: from front-far to right-near (12-17s)
+        // Approaching: from front-far to right-near
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/steps.wav",
             {
@@ -95,8 +95,8 @@ window.addEventListener("load", async () => {
                     ending: 20 
                 },
                 rotations: {
-                    starting: { yaw: 0, pitch: 0, roll: 0 }, // Start: front
-                    ending: { yaw: -90, pitch: 0, roll: 0 }  // End: back
+                    starting: { yaw: 0, pitch: 45, roll: 0 }, // Start: front
+                    ending: { yaw: -90, pitch: 45, roll: 0 }  // End: right 
                 },
                 timing: {
                     starting: 12,
@@ -105,7 +105,7 @@ window.addEventListener("load", async () => {
             }
         );
 
-        // Walking away: from right-near to back-far (16.2-23.5s)
+        // Walking away: from right-near to back-far
         await spatialManager.addAmbisonicsSource(
             "./resources/audio/steps.wav",
             {
@@ -114,8 +114,8 @@ window.addEventListener("load", async () => {
                     ending: 5
                 },
                 rotations: {
-                    starting: { yaw: -90, pitch: 0, roll: 0 }, // Start: right side
-                    ending: { yaw: 180, pitch: 0, roll: 0 }    // End: behind
+                    starting: { yaw: -90, pitch: 45, roll: 0 }, // Start: right
+                    ending: { yaw: 180, pitch: 45, roll: 0 }    // End: behind
                 },
                 timing: {
                     starting: 16.8,

@@ -1,4 +1,4 @@
-import Omnitone from '../node_modules/omnitone/build/omnitone.min.esm.js';
+import Omnitone from "../node_modules/omnitone/build/omnitone.min.esm.js";
 
 export default class SpatialAudioManager {
     constructor(audioCtx, videoElement) {
@@ -13,7 +13,7 @@ export default class SpatialAudioManager {
 
         // Initialize Omnitone FOA renderer
         this.foaRenderer = Omnitone.createFOARenderer(audioCtx, {
-            renderingMode: 'ambisonic'
+            renderingMode: "ambisonic"
         });
 
         this.foaRenderer.output.connect(this.masterGain);
@@ -52,7 +52,7 @@ export default class SpatialAudioManager {
             const audioSource = this.audioCtx.createMediaElementSource(audioElement);
 
             const sourceRenderer = Omnitone.createFOARenderer(this.audioCtx, {
-                renderingMode: 'ambisonic'
+                renderingMode: "ambisonic"
             });
             await sourceRenderer.initialize();
 
@@ -68,7 +68,7 @@ export default class SpatialAudioManager {
                 ending: this.videoElement.duration || Number.MAX_SAFE_INTEGER
             };
 
-            // Check if this is a dynamic (interpolated) source by checking if it has a ending rotation or volume
+            // Check if this is a dynamic source by checking if it has an ending rotation or volume
             const isDynamic = (rotations && rotations.ending) || (volumes && volumes.ending);
 
             const volume = volumes ? volumes.starting : 1;
@@ -82,14 +82,14 @@ export default class SpatialAudioManager {
                 audioSource,
                 sourceRenderer,
                 gainNode,
-                volume,
-                volumeEnd: volumeEnd ?? volume,
-                rotation,
-                rotationEnd: rotationEnd ?? rotation,
+                volumes,
+                // volumeEnd: volumeEnd ?? volume,
+                rotations,
+                // rotationEnd: rotationEnd ?? rotation,
                 timing: effectiveTiming,
                 id: this.sources.length,
                 name: audioFilePath.split("/").pop(),
-                type: 'ambisonics',
+                type: "ambisonics",
                 isDynamic
             };
 
@@ -112,22 +112,22 @@ export default class SpatialAudioManager {
 
                         // Interpolate volume
                         const currentVolume =
-                            sourceObj.volume +
-                            (sourceObj.volumeEnd - sourceObj.volume) * progress;
+                            sourceObj.volumes.starting +
+                            (sourceObj.volumes.ending - sourceObj.volumes.starting) * progress;
                         gainNode.gain.value = currentVolume;
 
                         // Interpolate rotation (will be applied in updateListenerOrientation)
                         sourceObj.currentRotation = {
-                            yaw: sourceObj.rotation.yaw +
-                                (sourceObj.rotationEnd.yaw - sourceObj.rotation.yaw) * progress,
-                            pitch: sourceObj.rotation.pitch +
-                                (sourceObj.rotationEnd.pitch - sourceObj.rotation.pitch) * progress,
-                            roll: sourceObj.rotation.roll +
-                                (sourceObj.rotationEnd.roll - sourceObj.rotation.roll) * progress
+                            yaw: sourceObj.rotations.starting.yaw +
+                                (sourceObj.rotations.ending.yaw - sourceObj.rotations.starting.yaw) * progress,
+                            pitch: sourceObj.rotations.starting.pitch +
+                                (sourceObj.rotations.ending.pitch - sourceObj.rotations.starting.pitch) * progress,
+                            roll: sourceObj.rotations.starting.roll +
+                                (sourceObj.rotations.ending.roll - sourceObj.rotations.starting.roll) * progress
                         };
                     } else {
                         gainNode.gain.value = volume;
-                        sourceObj.currentRotation = sourceObj.rotation;
+                        sourceObj.currentRotation = sourceObj.rotations.starting;
                     }
                 } else {
                     if (!audioElement.paused) {
@@ -139,7 +139,7 @@ export default class SpatialAudioManager {
             };
             requestAnimationFrame(update);
 
-            console.log(`[SAM] Added ${isDynamic ? 'DYNAMIC' : 'static'} Ambisonics FOA source: ${sourceObj.name}`);
+            console.log(`[SAM] Added ${isDynamic ? "dynamic" : "static"} Ambisonics FOA source: ${sourceObj.name}`);
             return sourceObj;
         } catch (error) {
             console.error(`[SAM] Error adding Ambisonics source ${audioFilePath}:`, error);
@@ -150,9 +150,9 @@ export default class SpatialAudioManager {
     updateListenerOrientation(yaw, pitch, roll) {
         // Update all Ambisonics sources with camera orientation
         this.sources.forEach(source => {
-            if (source.type === 'ambisonics' && source.sourceRenderer) {
+            if (source.type === "ambisonics" && source.sourceRenderer) {
                 // Use currentRotation if dynamic, otherwise use static rotation
-                const srcRot = source.currentRotation || source.rotation;
+                const srcRot = source.currentRotation || source.rotations.starting;
 
                 const totalYaw = yaw + (srcRot.yaw || 0) * Math.PI / 180;
                 const totalPitch = pitch + (srcRot.pitch || 0) * Math.PI / 180;
