@@ -43,7 +43,7 @@ export default function() {
 	`;
 	progressBar.appendChild(progressTooltip);
 
-	// MUTE VIDEO AUDIO - Keep only Ambisonics audio
+	// MUTE VIDEO AUDIO - Keep only Ambisonics audio clips
 	videoElement.volume = 0;
 	videoElement.muted = true;
 
@@ -137,7 +137,7 @@ export default function() {
 		// Format time as MM:SS
 		const minutes = Math.floor(time / 60);
 		const seconds = Math.floor(time % 60);
-		const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+		const formattedTime = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 		
 		progressTooltip.textContent = formattedTime;
 		
@@ -188,6 +188,7 @@ export default function() {
 	window.addEventListener("load", () => {
 		playerContainer.focus();
 	});
+
 
 	// Local functions and handlers
 

@@ -1,31 +1,31 @@
 /**
  * @typedef SourceOptions
- * @property {Positions} positions
+ * @property {Rotations} rotations 
  * @property {Volumes} volumes
  * @property {Timing} [timing]
  */
 
 /**
- * @typedef Position
- * @property {number} x - Positive increment -> to the right
- * @property {number} y - No increment
- * @property {number} z - Positive increment -> to the back 
+ * @typedef Rotation
+ * @property {number} yaw - Rotation around the vertical axis (in degrees)
+ * @property {number} pitch - Rotation around the lateral axis (in degrees)
+ * @property {number} roll - Rotation around the longitudinal axis (in degrees)
  */
 
 /**
- * @typedef Positions
- * @property {Position} starting
- * @property {Position} ending
+ * @typedef Rotations
+ * @property {Rotation} starting
+ * @property {Rotation} [ending]
  */
 
 /**
  * @typedef Volumes
  * @property {number} starting
- * @property {number} ending
+ * @property {number} [ending]
  */
 
 /**
  * @typedef Timing
  * @property {number} starting
- * @property {number} ending
+ * @property {number} [ending]
  */

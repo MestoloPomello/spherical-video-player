@@ -3,222 +3,166 @@ import initPlayerCommands from "./initPlayerCommands.js";
 import SpatialAudioManager from "./SpatialAudioManager.js";
 
 window.addEventListener("load", async () => {
-	initPlayerCommands();
+    initPlayerCommands();
 
-	let syncTimer;
+    let syncTimer;
 
-	const videoElement = document.getElementById("video360");
-	const cameraElement = document.getElementById("camera");
+    const videoElement = document.getElementById("video360");
+    const cameraElement = document.getElementById("camera");
 
-	// Initialize AudioContext
-	const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-	window.audioCtx = audioCtx;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    window.audioCtx = audioCtx;
 
-	try {
-		const spatialManager = new SpatialAudioManager(audioCtx, videoElement);
-		window.spatialManager = spatialManager;
+    try {
+        const spatialManager = new SpatialAudioManager(audioCtx, videoElement);
+        window.spatialManager = spatialManager;
 
-		// Set initial volume for spatial audio
-		spatialManager.setMasterVolume(0.5);
+        await spatialManager.initialize();
 
-		// Ducks sounds
-		const ducksPos = { x: -8, y: 0, z: 3 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/ducks.wav",
-			{
-				positions: {
-					starting: ducksPos,
-					ending: ducksPos
-				},
-				volumes: {
-					starting: 2,
-					ending: 2
-				}
-			}
-		);
+        spatialManager.setMasterVolume(0.5);
 
-		const noisePos = { x: 7.5, y: 0, z: 0 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/noise.wav",
-			{
-				positions: {
-					starting: noisePos,
-					ending: noisePos
-				},
-				volumes: {
-					starting: 5,
-					ending: 5
-				}
-			}
-		);
+        // Ducks near the river
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/ducks.wav",
+            {
+                volumes: {
+                    starting: 1
+                },
+                rotations: {
+                    starting: { yaw: 90, pitch: 0, roll: 0 }
+                }
+            }
+        );
 
-		// Water - multiple panner nodes for simulating the river
-		const waterPos1 = { x: -3, y: 0, z: 0 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/water.wav",
-			{
-				positions: {
-					starting: waterPos1,
-					ending: waterPos1
-				},
-				volumes: {
-					starting: 2,
-					ending: 2
-				}
-			}
-		);
+        // Noise from the street (on the right at the start)
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/noise.wav",
+            {
+                volumes: {
+                    starting: 1
+                },
+                rotations: {
+                    starting: { yaw: -90, pitch: 0, roll: 0 }
+                }
+            }
+        );
 
-		const waterPos2 = { x: -3, y: 0, z: 4 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/water.wav",
-			{
-				positions: {
-					starting: waterPos2,
-					ending: waterPos2
-				},
-				volumes: {
-					starting: 1.7,
-					ending: 1.7 
-				}
-			}
-		);
+        // River water, multiple instances
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volumes: {
+                    starting: 1.7
+                },
+                rotations: {
+                    starting: { yaw: 55, pitch: 0, roll: 0 }
+                }
+            }
+        );
 
-		const waterPos3 = { x: -3, y: 0, z: -4 };
-		await spatialManager.addSpatialSource(
-			"./resources/audio/water.wav",
-			{
-				positions: {
-					starting: waterPos3,
-					ending: waterPos3
-				},
-				volumes: {
-					starting: 1.7,
-					ending: 1.7 
-				}
-			}
-		);
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volumes: {
+                    starting: 2
+                },
+                rotations: {
+                    starting: { yaw: 60, pitch: 0, roll: 0 }
+                }
+            }
+        );
 
-		// Steps following the man - 2 sources:
-		// 1. while the man approaches
-		await spatialManager.addSpatialSource(
-			"./resources/audio/steps.wav",
-			{
-				positions: {
-					starting: { x: 0, y: 0, z: -10 },  // far, forward 
-					ending:   { x: 2, y: 0, z: -2 }    // near, right
-				},
-				volumes: {
-					starting: 20,
-					ending: 70
-				},
-				timing: {
-					starting: 12,
-					ending: 17
-				}
-			}
-		);
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/water.wav",
+            {
+                volumes: {
+                    starting: 1.7
+                },
+                rotations: {
+                    starting: { yaw: 65, pitch: 0, roll: 0 }
+                }
+            }
+        );
 
-		// 2. while the man goes away
-		await spatialManager.addSpatialSource(
-			"./resources/audio/steps.wav",
-			{
-				positions: {
-					starting: { x: 2, y: 0, z: -2 },	// near, right
-					ending:   { x: 0, y: 0, z: 5 }		// far, back 
-				},
-				volumes: {
-					starting: 70,
-					ending: 10
-				},
-				timing: {
-					starting: 16.2,
-					ending: 23.5
-				}
-			}
-		);
+        // Steps with dynamic movement - single file with interpolation
 
-		// People talking - first: people getting closer
-		// TODO - check for a better sound
-		// const stationaryPeopleVolume = 7;
-		// await spatialManager.addSpatialSource(
-		// 	"./resources/audio/crowd.wav",
-		// 	{
-		// 		positions: {
-		// 			starting: { x: 5, y: 0, z: -5 },	// near, right
-		// 			ending:   { x: 0, y: 0, z: -5 }		// far, back 
-		// 		},
-		// 		volumes: {
-		// 			starting: 0,
-		// 			ending: stationaryPeopleVolume 
-		// 		},
-		// 		timing: {
-		// 			starting: 0,
-		// 			ending: 9
-		// 		}
-		// 	}
-		// );
-		//
-		// // People talking - second: people become stationary near the source
-		// await spatialManager.addSpatialSource(
-		// 	"./resources/audio/crowd.wav",
-		// 	{
-		// 		positions: {
-		// 			starting: { x: 0, y: 0, z: -5 },	// near, right
-		// 			ending:   { x: 0, y: 0, z: -5 }		// far, back 
-		// 		},
-		// 		volumes: {
-		// 			starting: stationaryPeopleVolume,
-		// 			ending: stationaryPeopleVolume
-		// 		},
-		// 		timing: {
-		// 			starting: 9,
-		// 			ending: 75
-		// 		}
-		// 	}
-		// );
-		
+        // Approaching: from front-far to right-near
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/steps.wav",
+            {
+                volumes: {
+                    starting: 5,
+                    ending: 20 
+                },
+                rotations: {
+                    starting: { yaw: 0, pitch: 45, roll: 0 }, // Start: front
+                    ending: { yaw: -90, pitch: 45, roll: 0 }  // End: right 
+                },
+                timing: {
+                    starting: 12,
+                    ending: 16.8
+                }
+            }
+        );
 
-		// Update listener orientation based on camera rotation
-		AFRAME.registerComponent("spatial-listener-sync", {
-			tick: function () {
-				const rotation = cameraElement.getAttribute("rotation");
+        // Walking away: from right-near to back-far
+        await spatialManager.addAmbisonicsSource(
+            "./resources/audio/steps.wav",
+            {
+                volumes: {
+                    starting: 20,
+                    ending: 5
+                },
+                rotations: {
+                    starting: { yaw: -90, pitch: 45, roll: 0 }, // Start: right
+                    ending: { yaw: 180, pitch: 45, roll: 0 }    // End: behind
+                },
+                timing: {
+                    starting: 16.8,
+                    ending: 23.5
+                }
+            }
+        );
 
-				// Convert A-Frame rotation to radians
-				const yaw = -rotation.y * Math.PI / 180;   // Horizontal rotation
-				const pitch = -rotation.x * Math.PI / 180; // Vertical rotation  
-				const roll = -rotation.z * Math.PI / 180;  // Roll rotation
+        // Update listener orientation based on camera rotation
+        AFRAME.registerComponent("spatial-listener-sync", {
+            tick: function () {
+                const rotation = cameraElement.getAttribute("rotation");
 
-				spatialManager.updateListenerOrientation(yaw, pitch, roll);
-			}
-		});
+                // Convert A-Frame rotation to radians (Euler angles)
+                const yaw = -rotation.y * Math.PI / 180;   // Horizontal
+                const pitch = -rotation.x * Math.PI / 180; // Vertical  
+                const roll = -rotation.z * Math.PI / 180;  // Roll
 
-		cameraElement.setAttribute("spatial-listener-sync", "");
+                spatialManager.updateListenerOrientation(yaw, pitch, roll);
+            }
+        });
 
-		videoElement.addEventListener("play", startSyncTimer);
-		videoElement.addEventListener("pause", stopSyncTimer);
-		videoElement.addEventListener("ended", stopSyncTimer);
+        cameraElement.setAttribute("spatial-listener-sync", "");
 
-		// Cleanup when the page is closed
-		window.addEventListener("beforeunload", stopSyncTimer);
+        videoElement.addEventListener("play", startSyncTimer);
+        videoElement.addEventListener("pause", stopSyncTimer);
+        videoElement.addEventListener("ended", stopSyncTimer);
 
+        window.addEventListener("beforeunload", stopSyncTimer);
 
-		// Local functions
+        // Local functions
+        function startSyncTimer() {
+            syncTimer = setInterval(() => {
+                if (window.spatialManager && !videoElement.paused) {
+                    window.spatialManager.checkSynchronization();
+                }
+            }, 500);
+        }
 
-		function startSyncTimer() {
-			syncTimer = setInterval(() => {
-				if (window.spatialManager && !videoElement.paused) {
-					window.spatialManager.checkSynchronization();
-				}
-			}, 500);
-		}
+        function stopSyncTimer() {
+            if (syncTimer) {
+                clearInterval(syncTimer);
+                syncTimer = null;
+            }
+        }
 
-		function stopSyncTimer() {
-			if (syncTimer) {
-				clearInterval(syncTimer);
-				syncTimer = null;
-			}
-		}
-	} catch (error) {
-		console.error("[Main] Error initializing Spatial Audio Manager:", error);
-	}
+    } catch (error) {
+        console.error("[Main] Error initializing Spatial Audio Manager:", error);
+    }
 });
