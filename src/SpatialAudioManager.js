@@ -71,11 +71,11 @@ export default class SpatialAudioManager {
             // Check if this is a dynamic source by checking if it has an ending rotation or volume
             const isDynamic = (rotations && rotations.ending) || (volumes && volumes.ending);
 
-            const volume = volumes ? volumes.starting : 1;
-            const volumeEnd = volumes ? volumes.ending : null;
+            // const volume = volumes ? volumes.starting : 1;
+            // const volumeEnd = volumes ? volumes.ending : null;
 
-            const rotation = rotations ? rotations.starting : { yaw: 0, pitch: 0, roll: 0 };
-            const rotationEnd = rotations ? rotations.ending : null;    
+            // const rotation = rotations ? rotations.starting : { yaw: 0, pitch: 0, roll: 0 };
+            // const rotationEnd = rotations ? rotations.ending : null;    
 
             const sourceObj = {
                 audioElement,
@@ -126,7 +126,7 @@ export default class SpatialAudioManager {
                                 (sourceObj.rotations.ending.roll - sourceObj.rotations.starting.roll) * progress
                         };
                     } else {
-                        gainNode.gain.value = volume;
+                        gainNode.gain.value = volumes.starting;
                         sourceObj.currentRotation = sourceObj.rotations.starting;
                     }
                 } else {
